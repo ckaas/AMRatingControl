@@ -2,7 +2,7 @@
 //  AMRatingControl.h
 //  RatingControl
 //
-
+IB_DESIGNABLE
 
 #import <UIKit/UIKit.h>
 
@@ -16,14 +16,15 @@ typedef void (^EditingDidEndBlock)(NSUInteger rating);
 /**************************************************************************************************/
 #pragma mark - Getters and Setters
 
-@property (nonatomic, assign) NSInteger maxRating;
+@property (nonatomic, assign) IBInspectable NSInteger maxRating;
 @property (nonatomic, assign) NSInteger rating;
-@property (nonatomic, readwrite) NSUInteger starFontSize;
-@property (nonatomic, readwrite) NSUInteger starWidthAndHeight;
-@property (nonatomic, readwrite) NSUInteger starSpacing;
+@property (nonatomic, readwrite) IBInspectable NSUInteger starFontSize;
+@property (nonatomic, readwrite) IBInspectable NSUInteger starWidthAndHeight;
+@property (nonatomic, readwrite) IBInspectable NSUInteger starSpacing;
 @property (nonatomic, copy) EditingChangedBlock editingChangedBlock;
 @property (nonatomic, copy) EditingDidEndBlock editingDidEndBlock;
-
+@property (nonatomic) IBInspectable UIImage *emptyImage;
+@property (nonatomic) IBInspectable UIImage *solidImage;
 /**************************************************************************************************/
 #pragma mark - Birth & Death
 

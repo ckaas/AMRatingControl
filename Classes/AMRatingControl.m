@@ -34,7 +34,6 @@ static const NSString *kDefaultSolidChar = @"★";
 @implementation AMRatingControl
 {
     BOOL _respondsToTranslatesAutoresizingMaskIntoConstraints;
-    UIImage *_emptyImage, *_solidImage;
     UIColor *_emptyColor, *_solidColor;
     NSInteger _maxRating;
 }
@@ -70,6 +69,18 @@ static const NSString *kDefaultSolidChar = @"★";
 {
     _starSpacing = starSpacing;
     [self adjustFrame];
+    [self setNeedsDisplay];
+}
+
+- (void)setEmptyImage:(UIImage *)emptyImage
+{
+    _emptyImage = emptyImage;
+    [self setNeedsDisplay];
+}
+
+- (void)setSolidImage:(UIImage *)solidImage
+{
+    _solidImage = solidImage;
     [self setNeedsDisplay];
 }
 
@@ -125,8 +136,12 @@ static const NSString *kDefaultSolidChar = @"★";
 
 - (CGSize)intrinsicContentSize
 {
-    return CGSizeMake(_maxRating * _starWidthAndHeight + (_maxRating - 1) * _starSpacing,
-                      _starWidthAndHeight);
+    // if images are given we scale to whatever size was defined
+    if (!_solidImage && ! _emptyImage){
+        return CGSizeMake(_maxRating * _starWidthAndHeight + (_maxRating - 1) * _starSpacing,
+                          _starWidthAndHeight);
+    }
+    return self.frame.size;
 }
 
 
@@ -141,15 +156,17 @@ static const NSString *kDefaultSolidChar = @"★";
 	{
 		if (_solidImage)
         {
-            [_solidImage drawAtPoint:currPoint];
+            CGRect destinationRect = CGRectMake(currPoint.x, currPoint.y, self.frame.size.height, self.frame.size.height);
+            [_solidImage drawInRect:destinationRect];
+            currPoint.x += self.frame.size.height;
         }
 		else
         {
             CGContextSetFillColorWithColor(UIGraphicsGetCurrentContext(), _solidColor.CGColor);
             [kDefaultSolidChar drawAtPoint:currPoint withFont:[UIFont boldSystemFontOfSize:_starFontSize]];
+            currPoint.x += (_starWidthAndHeight + _starSpacing);
         }
         
-		currPoint.x += (_starWidthAndHeight + _starSpacing);
 	}
 	
 	NSInteger remaining = _maxRating - _rating;
@@ -158,14 +175,16 @@ static const NSString *kDefaultSolidChar = @"★";
 	{
 		if (_emptyImage)
         {
-			[_emptyImage drawAtPoint:currPoint];
+            CGRect destinationRect = CGRectMake(currPoint.x, currPoint.y, self.frame.size.height, self.frame.size.height);
+			[_emptyImage drawInRect:destinationRect];
+            currPoint.x += self.frame.size.height;
         }
 		else
         {
             CGContextSetFillColorWithColor(UIGraphicsGetCurrentContext(), _emptyColor.CGColor);
 			[kDefaultEmptyChar drawAtPoint:currPoint withFont:[UIFont boldSystemFontOfSize:_starFontSize]];
+            currPoint.x += (_starWidthAndHeight + _starSpacing);
         }
-		currPoint.x += (_starWidthAndHeight + _starSpacing);
 	}
 }
 
@@ -263,18 +282,30 @@ static const NSString *kDefaultSolidChar = @"★";
     }
     else
     {
-        CGRect newFrame = CGRectMake(self.frame.origin.x,
-                                     self.frame.origin.y,
-                                     _maxRating * _starWidthAndHeight + (_maxRating - 1) * _starSpacing,
-                                     _starWidthAndHeight);
-        self.frame = newFrame;
+        if (_solidImage && _emptyImage){
+            // just keep the frame we already have ;-)
+        }else{
+            CGRect newFrame = CGRectMake(self.frame.origin.x,
+                                         self.frame.origin.y,
+                                         _maxRating * _starWidthAndHeight + (_maxRating - 1) * _starSpacing,
+                                         _starWidthAndHeight);
+            self.frame = newFrame;
+        }
     }
 }
 
 - (void)handleTouch:(UITouch *)touch
 {
     CGFloat width = self.frame.size.width;
-	CGRect section = CGRectMake(0, 0, _starWidthAndHeight, self.frame.size.height);
+    CGRect section;
+    CGFloat sectionWidth;
+    if (! _solidImage && ! _emptyImage){
+        sectionWidth = _starWidthAndHeight;
+    }else{
+        sectionWidth = self.frame.size.height;
+    }
+
+    section = CGRectMake(0, 0, sectionWidth, self.frame.size.height);
 	
 	CGPoint touchLocation = [touch locationInView:self];
 	
@@ -304,7 +335,7 @@ static const NSString *kDefaultSolidChar = @"★";
 	{
 		for (int i = 0 ; i < _maxRating ; i++)
 		{
-			if ((touchLocation.x > section.origin.x) && (touchLocation.x < (section.origin.x + _starWidthAndHeight)))
+			if ((touchLocation.x > section.origin.x) && (touchLocation.x < (section.origin.x + sectionWidth)))
 			{
 				if (_rating != (i + 1))
 				{
@@ -316,7 +347,7 @@ static const NSString *kDefaultSolidChar = @"★";
 				}
 				break;
 			}
-			section.origin.x += (_starWidthAndHeight + _starSpacing);
+			section.origin.x += (sectionWidth + _starSpacing);
 		}
 	}
 	[self setNeedsDisplay];
